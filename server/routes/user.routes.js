@@ -4,14 +4,14 @@ import authCtrl from '../controllers/auth.controller';
 
 const router = express.Router();
 
-router.route('/api/users').get(userCtrl.read).post(userCtrl.post);
+router.route('/api/users').get(userCtrl.list).post(userCtrl.create);
 
 router
   .route('/api/users/:userId')
-  .get(authCtrl.requireSignIn, userCtrl.read)
-  .put(authCtrl.requireSignIn, authCtrl.hasAuthorization, userCtrl.updated)
-  .delete(authCtrl.requireSignIn, authCtrl.hasAuthorization, userCtrl.remove);
+  .get(authCtrl.requireSignin, userCtrl.read)
+  .put(authCtrl.requireSignin, authCtrl.hasAuthorization, userCtrl.update)
+  .delete(authCtrl.requireSignin, authCtrl.hasAuthorization, userCtrl.remove);
 
-router.param('userId', userCtrl.userId);
+router.param('userId', userCtrl.userByID);
 
 export default router;

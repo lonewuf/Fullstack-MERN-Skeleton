@@ -1,6 +1,6 @@
-import User from '../../models/user.model';
+import User from '../models/user.model';
 import extend from 'lodash/extend';
-import errorHandler from './error.controller';
+import errorHandler from '../helpers/dbErrorHandler';
 
 const create = async (req, res) => {
   const user = new User(req.body);
@@ -16,30 +16,21 @@ const create = async (req, res) => {
   }
 };
 
-const list = async (req, res) => {
-  try {
-    let users = await User.find().select('name email updated created');
-    res.json(users);
-  } catch {
-    return res.status(400).json({
-      error: errorHandler.getErrorMessage(err),
-    });
-  }
-};
-
-const userId = async (req, res, next, id) => {
+/**
+ * Load user and append to req.
+ */
+const userByID = async (req, res, next, id) => {
   try {
     let user = await User.findById(id);
-    if (!user) {
-      return res.status(400).json({
-        error: errorHandler.getErrorMessage(err),
+    if (!user)
+      return res.status('400').json({
+        error: 'User not found',
       });
-    }
     req.profile = user;
     next();
   } catch (err) {
-    return res.status(400).json({
-      error: errorHandler.getErrorMessage(err),
+    return res.status('400').json({
+      error: 'Could not retrieve user',
     });
   }
 };
@@ -50,7 +41,18 @@ const read = (req, res) => {
   return res.json(req.profile);
 };
 
-const update = async (req, res, next) => {
+const list = async (req, res) => {
+  try {
+    let users = await User.find().select('name email updated created');
+    res.json(users);
+  } catch (err) {
+    return res.status(400).json({
+      error: errorHandler.getErrorMessage(err),
+    });
+  }
+};
+
+const update = async (req, res) => {
   try {
     let user = req.profile;
     user = extend(user, req.body);
@@ -66,7 +68,7 @@ const update = async (req, res, next) => {
   }
 };
 
-const remove = async (req, res, next) => {
+const remove = async (req, res) => {
   try {
     let user = req.profile;
     let deletedUser = await user.remove();
@@ -82,9 +84,9 @@ const remove = async (req, res, next) => {
 
 export default {
   create,
-  list,
-  userId,
+  userByID,
   read,
-  update,
+  list,
   remove,
+  update,
 };

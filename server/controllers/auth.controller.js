@@ -1,26 +1,36 @@
-import User from '../../models/user.model';
+import User from '../models/user.model';
 import jwt from 'jsonwebtoken';
-import expressJWT from 'express-jwt';
-import config from '../../config/config';
+import expressJwt from 'express-jwt';
+import config from './../../config/config';
 
-const signin = async (req, res, next) => {
+const signin = async (req, res) => {
   try {
-    let user = await User.findOne({ email: req.body.email });
-    if (!user) {
-      return res.status(401).json({ error: 'User not found.' });
-    }
+    let user = await User.findOne({
+      email: req.body.email,
+    });
+    if (!user)
+      return res.status('401').json({
+        error: 'User not found',
+      });
 
     if (!user.authenticate(req.body.password)) {
-      return res.status(401).json({
-        error: `Email and password don't match`,
+      return res.status('401').send({
+        error: "Email and password don't match.",
       });
     }
 
-    const token = jwt.sign({ _id: user._id }, config.jwtSecret);
+    const token = jwt.sign(
+      {
+        _id: user._id,
+      },
+      config.jwtSecret
+    );
 
-    res.cookie('t', token, { expire: new Date() + 9999 });
+    res.cookie('t', token, {
+      expire: new Date() + 9999,
+    });
 
-    return res.status(200).json({
+    return res.json({
       token,
       user: {
         _id: user._id,
@@ -29,30 +39,30 @@ const signin = async (req, res, next) => {
       },
     });
   } catch (err) {
-    return res.status(401).json({
-      error: 'Could not signin.',
+    return res.status('401').json({
+      error: 'Could not sign in',
     });
   }
 };
 
-const signout = (req, res, next) => {
+const signout = (req, res) => {
   res.clearCookie('t');
-  res.status(200).json({
-    message: 'Signed out',
+  return res.status('200').json({
+    message: 'signed out',
   });
 };
 
-const requireSignIn = expressJWT({
-  secret: config.secret,
+const requireSignin = expressJwt({
+  secret: config.jwtSecret,
   userProperty: 'auth',
+  algorithms: ['RS256'],
 });
 
 const hasAuthorization = (req, res, next) => {
-  const authorized =
-    req.profile && req.auth && req.profile._id === req.auth._id;
+  const authorized = req.profile && req.auth && req.profile._id == req.auth._id;
   if (!authorized) {
-    return res.status(403).json({
-      error: 'User is not authorized.',
+    return res.status('403').json({
+      error: 'User is not authorized',
     });
   }
   next();
@@ -61,6 +71,6 @@ const hasAuthorization = (req, res, next) => {
 export default {
   signin,
   signout,
-  requireSignIn,
+  requireSignin,
   hasAuthorization,
 };
